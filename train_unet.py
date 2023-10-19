@@ -51,7 +51,7 @@ def batch_inp(bs20inp, target_bs):
 
 
 def train(model, vae, optimizer_class, batchsize, use_zero=False, use_amp=True, h=512, w=512, is_xl=False,
-          quant_act=True):
+          recompute=True):
     if not is_xl:
         timesteps = torch.arange(batchsize, dtype=torch.int64).cuda()+100
         prompt_embeds = torch.rand([batchsize,77,768], dtype=torch.float16).cuda()
@@ -74,8 +74,8 @@ def train(model, vae, optimizer_class, batchsize, use_zero=False, use_amp=True, 
         "text_embeds": text_embeds
     }
 
-
-    model.enable_gradient_checkpointing()
+    if recompute:
+        model.enable_gradient_checkpointing()
     # model.enable_xformers_memory_efficient_attention()
     # torch._dynamo.config.suppress_errors = True
     # model=torch.compile(model)
@@ -154,4 +154,4 @@ vae = AutoencoderKL.from_pretrained(pretrained_model_name_or_path, subfolder="va
 optimizer_class = functools.partial(torch.optim.Adam,fused = True)
 train(unet, vae, optimizer_class, 4,
       use_amp=False, use_zero=False, h=576, w=1080, is_xl ='xl' in pretrained_model_name_or_path,
-      quant_act=True)
+      recompute=False)
